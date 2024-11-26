@@ -1,0 +1,15 @@
+http://web.student.chalmers.se/groups/datx02-dtp/report.pdf
+
+
+
+https://www.google.co.jp/url?sa=t&rct=j&q=&esrc=s&source=web&cd=1&ved=0ahUKEwj-4dbpzM_YAhXDGpQKHbHXAjcQFggnMAA&url=http%3A%2F%2Fhome.iitk.ac.in%2F~shrutib%2FCS395a%2Freport.pdf&usg=AOvVaw1Qp_3vb2fO-RkdfEGT0Fun
+
+
+https://akaposi.github.io/proplogic.pdf
+
+
+
+Book:
+Verified Functional Programming in Agda
+url: https://www.amazon.co.jp/dp/B01K0MK318/ref=dp-kindle-redirect?_encoding=UTF8&btkr=1
+
