@@ -1,5 +1,4 @@
-{-# OPTIONS  --safe --cubical-compatible  #-}
--- {-# OPTIONS  --allow-unsolved-metas --cubical-compatible  #-}
+{-# OPTIONS  --allow-unsolved-metas --cubical-compatible  #-}
 module RBTree1 where
 
 open import Level hiding (suc ; zero ; _⊔_ )
@@ -44,6 +43,26 @@ RB→t2notLeaf {n} {A} {k} {v} .(node _ ⟪ Black , _ ⟫ _ (node _ ⟪ Red , _ 
 RB→t2notLeaf {n} {A} {k} {v} .(node kg ⟪ Black , _ ⟫ (node kp ⟪ Red , _ ⟫ _ _) _) .(node kn ⟪ Black , _ ⟫ (node kp ⟪ Red , _ ⟫ _ t₂) (node kg ⟪ Red , _ ⟫ t₃ _)) (rbr-rotate-lr t₂ t₃ kg kp kn x x₁ x₂ rbt) = record { key = kn ; value = ⟪ Black , _ ⟫ ; left = _ ; right = _; t=node = refl }
 RB→t2notLeaf {n} {A} {k} {v} .(node kg ⟪ Black , _ ⟫ _ (node kp ⟪ Red , _ ⟫ _ _)) .(node kn ⟪ Black , _ ⟫ (node kg ⟪ Red , _ ⟫ _ t₂) (node kp ⟪ Red , _ ⟫ t₃ _)) (rbr-rotate-rl t₂ t₃ kg kp kn x x₁ x₂ rbt) = record { key = kn ; value = ⟪ Black , _ ⟫ ; left = _ ; right = _; t=node = refl }
 
+
+tree-construct : {n : Level} (A : Set n) {vg : A} {kg : ℕ} → (uncle t : bt A ) → tr< kg uncle → tr> kg t
+  → treeInvariant uncle → treeInvariant t → treeInvariant (node kg vg uncle t)
+tree-construct A {vg} {kg} uncle t ux tx ui ti with node→leaf∨IsNode t | node→leaf∨IsNode uncle
+... | case1 teq | case1 ueq = subst treeInvariant (node-cong refl refl (sym ueq)  (sym teq) ) (t-single _ _)
+... | case1 teq | case2 un = subst treeInvariant (node-cong refl refl (sym (IsNode.t=node un)) (sym teq)  ) (t-left _ _
+    (proj1 rr11) (proj1 (proj2 rr11)) (proj2 (proj2 rr11)) (subst treeInvariant (IsNode.t=node un) ui)) where
+      rr11 : (IsNode.key un < kg ) ∧ tr< kg (IsNode.left un) ∧ tr< kg (IsNode.right un)
+      rr11 = subst (λ k → tr< kg k) (IsNode.t=node un) ux
+... | case2 tn | case1 ueq = subst treeInvariant (node-cong refl refl (sym ueq) (sym (IsNode.t=node tn)) ) (t-right _ _
+    (proj1 rr12) (proj1 (proj2 rr12)) (proj2 (proj2 rr12)) (subst treeInvariant (IsNode.t=node tn) ti)) where
+      rr12 : (kg < IsNode.key tn ) ∧ tr> kg (IsNode.left tn) ∧ tr> kg (IsNode.right tn)
+      rr12 = subst (λ k → tr> kg k) (IsNode.t=node tn) tx
+... | case2 tn | case2 un = subst treeInvariant (node-cong refl refl (sym (IsNode.t=node un)) (sym (IsNode.t=node tn)) ) (t-node _ _ _
+    (proj1 rr11) (proj1 rr12) (proj1 (proj2 rr11)) (proj2 (proj2 rr11)) (proj1 (proj2 rr12)) (proj2 (proj2 rr12))
+       (subst treeInvariant (IsNode.t=node un) ui) (subst treeInvariant (IsNode.t=node tn) ti)) where
+      rr11 : (IsNode.key un < kg ) ∧ tr< kg (IsNode.left un) ∧ tr< kg (IsNode.right un)
+      rr11 = subst (λ k → tr< kg k) (IsNode.t=node un) ux
+      rr12 : (kg < IsNode.key tn ) ∧ tr> kg (IsNode.left tn) ∧ tr> kg (IsNode.right tn)
+      rr12 = subst (λ k → tr> kg k) (IsNode.t=node tn) tx
 
 treeInvariant-to-black : {n : Level} (A : Set n)  → {t : bt (Color ∧ A) } →
   treeInvariant t → treeInvariant (to-black t)
@@ -414,7 +433,7 @@ stackToPG {n} {A} {key} tree orig (x ∷ x₁ ∷ x₂ ∷ stack) si = case2 (ca
    ... | case1 geq = ⊥-elim ( proj2 (si-property-5 eq si) geq )
    ... | case2 gn = record {
           parent = x₁ ; uncle = IsNode.left gn ; grand =  x₂
-        ; pg = s2-1s2p lt1 (subst (λ k → k < key) si06 lt2) (sym si03) (trans (IsNode.t=node gn) (node-cong refl refl refl si04 ) )
+        ; pg = s2-1s2p lt1 (sym si03) (trans (IsNode.t=node gn) (node-cong refl refl refl si04 ) )
         ; rest  = stack1
         ; stack=gp  = cong₂ (λ j k → tree ∷ j ∷ k ) si03 si02
         } where
@@ -432,14 +451,12 @@ stackToPG {n} {A} {key} tree orig (x ∷ x₁ ∷ x₂ ∷ stack) si = case2 (ca
                     node key₁ v1 tree₃ (node key₂ v2 tree₂ tree₁) ≡⟨ cong (λ k →  node key₁ v1 tree₃ k ) si03 ⟩
                     node key₁ v1 tree₃ x₁  ∎ )) ⟩
                 x₁ ∎ where open ≡-Reasoning
-            si06 : key₁ ≡ IsNode.key gn 
-            si06 = just-injective (cong node-key (trans si05 (IsNode.t=node gn)))
    si01 _ stack1 si@(s-right tree₃ orig tree₁ {key₂} {v2} lt1 (s-left .(node _ _ tree₁ tree₃) .orig tree₂ {key₁} {v1} {st} lt2 si₂)) eq 
       with  node→leaf∨IsNode x₂
    ... | case1 geq = ⊥-elim ( proj2 (si-property-5 eq si) geq )
    ... | case2 gn = record {
           parent = x₁ ; uncle = IsNode.right gn ; grand =  x₂
-        ; pg = s2-1sp2 lt1 (subst (λ k → key < k) si06 lt2) (sym si03) (trans (IsNode.t=node gn) (node-cong refl refl si04 refl ) )
+        ; pg = s2-1sp2 lt1 (sym si03) (trans (IsNode.t=node gn) (node-cong refl refl si04 refl ) )
         ; rest  = stack1
         ; stack=gp  = cong₂ (λ j k → tree ∷ j ∷ k ) si03 si02
         } where
@@ -457,15 +474,13 @@ stackToPG {n} {A} {key} tree orig (x ∷ x₁ ∷ x₂ ∷ stack) si = case2 (ca
                     node key₁ v1  (node key₂ v2  tree₁ tree₃) tree₂ ≡⟨ cong (λ k →  node key₁ v1 k tree₂  ) si03 ⟩
                     node key₁ v1  x₁ tree₂  ∎ )) ⟩
                 x₁ ∎ where open ≡-Reasoning
-            si06 : key₁ ≡ IsNode.key gn 
-            si06 = just-injective (cong node-key (trans si05 (IsNode.t=node gn)))
    si01 _ _ (s-left tree₁ .(node _ _ tree₁ tree) tree x s-nil) ()
    si01 _ stack1 si@(s-left tree₃ orig tree₁ {key₂} {v2} lt1 (s-right .(node _ _ tree₃ tree₁) .orig tree₂ {key₁} {v1} {st} lt2 si₂)) eq 
       with  node→leaf∨IsNode x₂
    ... | case1 geq = ⊥-elim ( proj2 (si-property-5 eq si) geq )
    ... | case2 gn = record {
           parent = x₁ ; uncle = IsNode.left gn ; grand =  x₂
-        ; pg = s2-s12p lt1 (subst (λ k → k < key) si06 lt2) (sym si03) (trans (IsNode.t=node gn) (node-cong refl refl refl si04 ) )
+        ; pg = s2-s12p lt1 (sym si03) (trans (IsNode.t=node gn) (node-cong refl refl refl si04 ) )
         ; rest  = stack1
         ; stack=gp  = cong₂ (λ j k → tree ∷ j ∷ k ) si03 si02
         } where
@@ -483,14 +498,12 @@ stackToPG {n} {A} {key} tree orig (x ∷ x₁ ∷ x₂ ∷ stack) si = case2 (ca
                     node key₁ v1 tree₂ _ ≡⟨ cong (λ k →  node key₁ v1 tree₂ k ) si03 ⟩
                     node key₁ v1 tree₂ x₁  ∎ )) ⟩
                 x₁ ∎ where open ≡-Reasoning
-            si06 : key₁ ≡ IsNode.key gn 
-            si06 = just-injective (cong node-key (trans si05 (IsNode.t=node gn)))
    si01 _ stack1 si@(s-left tree₃ orig tree₁ {key₂} {v2} lt1 (s-left .(node _ _ tree₃ tree₁) .orig tree₂ {key₁} {v1} {st} lt2 si₂)) eq 
       with  node→leaf∨IsNode x₂
    ... | case1 geq = ⊥-elim ( proj2 (si-property-5 eq si) geq )
    ... | case2 gn = record {
           parent = x₁ ; uncle = IsNode.right gn ; grand =  x₂
-        ; pg = s2-s1p2 lt1 (subst (λ k → key < k) si06 lt2) (sym si03) (trans (IsNode.t=node gn) (node-cong refl refl si04 refl ) )
+        ; pg = s2-s1p2 lt1 (sym si03) (trans (IsNode.t=node gn) (node-cong refl refl si04 refl ) )
         ; rest  = stack1
         ; stack=gp  = cong₂ (λ j k → tree ∷ j ∷ k ) si03 si02
         } where
@@ -508,8 +521,6 @@ stackToPG {n} {A} {key} tree orig (x ∷ x₁ ∷ x₂ ∷ stack) si = case2 (ca
                     node key₁ v1 _ tree₂ ≡⟨ cong (λ k →  node key₁ v1 k tree₂ ) si03 ⟩
                     node key₁ v1 x₁ tree₂  ∎ )) ⟩
                 x₁ ∎ where open ≡-Reasoning
-            si06 : key₁ ≡ IsNode.key gn 
-            si06 = just-injective (cong node-key (trans si05 (IsNode.t=node gn)))
 
 stackCase1 : {n : Level} {A : Set n} → {key : ℕ } → {tree orig : bt A }
            →  {stack : List (bt A)} → stackInvariant key tree orig stack
@@ -522,10 +533,10 @@ pg-prop-1 : {n : Level} (A : Set n) → (key : ℕ) → (tree orig : bt A )
            →  (stack : List (bt A)) → (pg : PG A key tree stack)
            → (¬  PG.grand pg ≡ leaf ) ∧  (¬  PG.parent pg ≡ leaf)
 pg-prop-1 {_} A _ tree orig stack pg with PG.pg pg
-... | s2-s1p2 _ _ refl refl = ⟪ (λ () ) , ( λ () ) ⟫
-... | s2-1sp2 _ _ refl refl = ⟪ (λ () ) , ( λ () ) ⟫
-... | s2-s12p _ _ refl refl = ⟪ (λ () ) , ( λ () ) ⟫
-... | s2-1s2p _ _ refl refl = ⟪ (λ () ) , ( λ () ) ⟫
+... | s2-s1p2 _ refl refl = ⟪ (λ () ) , ( λ () ) ⟫
+... | s2-1sp2 _ refl refl = ⟪ (λ () ) , ( λ () ) ⟫
+... | s2-s12p _ refl refl = ⟪ (λ () ) , ( λ () ) ⟫
+... | s2-1s2p _ refl refl = ⟪ (λ () ) , ( λ () ) ⟫
 
 
 PGtoRBinvariant1 : {n : Level} {A : Set n}

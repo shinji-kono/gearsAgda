@@ -57,15 +57,15 @@ run = pickup_rfork record { ptr = 1 ; left = record { ptr = 2 ; value = 0 } ; ri
 -- Coda Gear
 --
 
-data Code1 : Set  where
-   C_nop : Code1
-   C_cas_int : Code1
-   C_putdown_rfork : Code1
-   C_putdown_lfork : Code1
-   C_thinking : Code1
-   C_pickup_rfork : Code1
-   C_pickup_lfork : Code1
-   C_eating : Code1
+data Code : Set  where
+   C_nop : Code
+   C_cas_int : Code
+   C_putdown_rfork : Code 
+   C_putdown_lfork : Code 
+   C_thinking : Code 
+   C_pickup_rfork : Code 
+   C_pickup_lfork : Code 
+   C_eating : Code 
 
 --
 -- all possible arguments in -APIs
@@ -81,11 +81,11 @@ record Phil-API : Set  where
 --
 --      waiting / pointer / available
 --
-data Data1 : Set where
+data Data : Set where
    -- D_AtomicNat :  AtomicNat → ℕ → Data
-   D_AtomicNat :  AtomicNat → Data1
-   D_Phil :      Phil → Data1
-   D_Error :      Error → Data1
+   D_AtomicNat :  AtomicNat → Data
+   D_Phil :      Phil → Data
+   D_Error :      Error → Data
 
 -- data API : Set where
 --    A_AtomicNat :  AtomicNat-API → API
@@ -112,50 +112,49 @@ insertTree = ?
 -- putdown_rfork : Phil → (? → t) → t
 -- putdown_rfork p next = goto p->lfork->cas( 0 , putdown_lfork, putdown_lfork ) , next
 
-Phil_putdown_rfork_sub : {n : Level} {t : Set n} → Context  → ( Code1 → Context → t ) → t
+Phil_putdown_rfork_sub : {n : Level} {t : Set n} → Context  → ( Code → Context → t ) → t
 Phil_putdown_rfork_sub c next = next C_cas_int record c {
-       c_AtomicNat-API = record { impl = Phil.right phil ; value =  0 ; fail = C_putdown_lfork ; next = C_putdown_lfork } }  where
+    c_AtomicNat-API = record { impl = Phil.right phil ; value =  0 ; fail = C_putdown_lfork ; next = C_putdown_lfork } }  where
     phil : Phil
-    phil = Phil-API.impl ? -- ( Context.c_Phil-API c )
+    phil = Phil-API.impl ( Context.c_Phil-API c )
 
-Phil_putdown_lfork_sub : {n : Level} {t : Set n} → Context  → ( Code1 → Context → t ) → t
+Phil_putdown_lfork_sub : {n : Level} {t : Set n} → Context  → ( Code → Context → t ) → t
 Phil_putdown_lfork_sub c next = next C_cas_int record c { 
-       c_AtomicNat-API = record { impl = Phil.left phil ; value =  0 ; fail = C_thinking ; next = C_thinking } }  where
+    c_AtomicNat-API = record { impl = Phil.left phil ; value =  0 ; fail = C_thinking ; next = C_thinking } }  where
     phil : Phil
-    phil = ? -- Phil-API.impl ( Context.c_Phil-API c )
+    phil = Phil-API.impl ( Context.c_Phil-API c )
 
-Phil_thiking : {n : Level} {t : Set n} → Context  → ( Code1 → Context → t ) → t
-Phil_thiking c next = next ? ? -- C_pickup_rfork c  
+Phil_thiking : {n : Level} {t : Set n} → Context  → ( Code → Context → t ) → t
+Phil_thiking c next = next C_pickup_rfork c  
 
-Phil_pickup_lfork_sub : {n : Level} {t : Set n} → Context  → ( Code1 → Context → t ) → t
-Phil_pickup_lfork_sub c next = next ? ? where -- C_cas_int record c { 
-    -- c_AtomicNat-API = record { impl = Phil.left phil ; value =  Phil.ptr phil ; fail = C_pickup_lfork ; next = C_pickup_rfork } }  where
+Phil_pickup_lfork_sub : {n : Level} {t : Set n} → Context  → ( Code → Context → t ) → t
+Phil_pickup_lfork_sub c next = next C_cas_int record c { 
+    c_AtomicNat-API = record { impl = Phil.left phil ; value =  Phil.ptr phil ; fail = C_pickup_lfork ; next = C_pickup_rfork } }  where
     phil : Phil
-    phil = ? -- Phil-API.impl ( Context.c_Phil-API c )
+    phil = Phil-API.impl ( Context.c_Phil-API c )
 
-Phil_pickup_rfork_sub : {n : Level} {t : Set n} → Context  → ( Code1 → Context → t ) → t
-Phil_pickup_rfork_sub c next = next ? ? where -- C_cas_int record c { 
-    -- c_AtomicNat-API = record { impl = Phil.left phil ; value =  Phil.ptr phil ; fail = C_pickup_rfork ; next = C_eating } }  where
+Phil_pickup_rfork_sub : {n : Level} {t : Set n} → Context  → ( Code → Context → t ) → t
+Phil_pickup_rfork_sub c next = next C_cas_int record c { 
+    c_AtomicNat-API = record { impl = Phil.left phil ; value =  Phil.ptr phil ; fail = C_pickup_rfork ; next = C_eating } }  where
     phil : Phil
-    phil = ? -- Phil-API.impl ( Context.c_Phil-API c )
+    phil = Phil-API.impl ( Context.c_Phil-API c )
 
-Phil_eating_sub : {n : Level} {t : Set n} → Context  → ( Code1 → Context → t ) → t
-Phil_eating_sub c next =  next ? ? -- C_putdown_rfork c 
+Phil_eating_sub : {n : Level} {t : Set n} → Context  → ( Code → Context → t ) → t
+Phil_eating_sub c next =  next C_putdown_rfork c 
 
-code_table1 :  {n : Level} {t : Set n} → Code1 → Context → ( Code1 → Context → t) → t
-code_table1 C_nop  = λ c  next  → next C_nop c
-code_table1 C_cas_int  = ? -- AtomicInt_cas_stub
-code_table1 C_putdown_rfork = Phil_putdown_rfork_sub
-code_table1 C_putdown_lfork = Phil_putdown_lfork_sub
-code_table1 C_thinking = Phil_thiking
-code_table1 C_pickup_rfork = Phil_pickup_lfork_sub
-code_table1 C_pickup_lfork = Phil_pickup_rfork_sub
-code_table1 C_eating = Phil_eating_sub
+code_table :  {n : Level} {t : Set n} → Code → Context → ( Code → Context → t) → t
+code_table C_nop  = λ c  next  → next C_nop c
+code_table C_cas_int  = AtomicInt_cas_stub
+code_table C_putdown_rfork = Phil_putdown_rfork_sub
+code_table C_putdown_lfork = Phil_putdown_lfork_sub
+code_table C_thinking = Phil_thiking
+code_table C_pickup_rfork = Phil_pickup_lfork_sub
+code_table C_pickup_lfork = Phil_pickup_rfork_sub
+code_table C_eating = Phil_eating_sub
 
 
 init-Phil-0 : (ps : List Context) → (left right : AtomicNat ) → List Context
-init-Phil-0 ps left right = ? -- new-data (c1 ps) ( λ ptr → D_Phil (p ptr) )  $ λ c ptr → record c { c_Phil-API = record { next = C_thinking ; impl = p ptr }} ∷ ps where
- where
+init-Phil-0 ps left right = new-data (c1 ps) ( λ ptr → D_Phil (p ptr) )  $ λ c ptr → record c { c_Phil-API = record { next = C_thinking ; impl = p ptr }} ∷ ps where
     p : ℕ → Phil
     p ptr = record  init-Phil { ptr = ptr ; left = left ; right = right }  
     c1 :  List Context → Context
@@ -163,35 +162,35 @@ init-Phil-0 ps left right = ? -- new-data (c1 ps) ( λ ptr → D_Phil (p ptr) ) 
     c1 (c2 ∷ ct) =  c2
 
 init-AtomicNat1 :  {n : Level} {t : Set n} → Context  → ( Context →  AtomicNat → t ) → t
-init-AtomicNat1 c1  next = ? where -- new-data c1  ( λ ptr → D_AtomicNat (a ptr) ) $ λ c2 ptr → next c2 (a ptr) where
+init-AtomicNat1 c1  next = new-data c1  ( λ ptr → D_AtomicNat (a ptr) ) $ λ c2 ptr → next c2 (a ptr) where
     a : ℕ → AtomicNat
     a ptr = record { ptr = ptr ; value = 0 }
 
 init-Phil-1 : (c1 : Context) → Context
-init-Phil-1 c1 = ? where -- record c1 { memory = mem2 $ mem1 $ mem ; mbase = n + 3 } where
+init-Phil-1 c1 = record c1 { memory = mem2 $ mem1 $ mem ; mbase = n + 3 } where
    n : ℕ
    n = Context.mbase c1
    left  = record { ptr = suc n ; value = 0}
    right = record { ptr = suc (suc n) ; value = 0}
    mem : bt Data
-   mem = ? -- insertTree ( Context.memory c1) (suc n) (D_AtomicNat left)
-      -- $ λ t →  t
+   mem = insertTree ( Context.memory c1) (suc n) (D_AtomicNat left)
+      $ λ t →  t
    mem1 : bt Data → bt Data
-   mem1 t = insertTree t (suc (suc n)) ? -- (D_AtomicNat right )
+   mem1 t = insertTree t (suc (suc n)) (D_AtomicNat right )
       $ λ t →  t
    mem2 : bt Data → bt Data
-   mem2 t = insertTree t (n + 3) ? -- (D_Phil record { ptr = n + 3 ; left = left ; right = right })  
+   mem2 t = insertTree t (n + 3) (D_Phil record { ptr = n + 3 ; left = left ; right = right })  
       $ λ t →  t
      
 test-i0 : bt Data
-test-i0 =  ? -- Context.memory (init-Phil-1 init-context)
+test-i0 =  Context.memory (init-Phil-1 init-context)
 
 make-phil : ℕ → Context
 make-phil zero = init-context
 make-phil (suc n) = init-Phil-1 ( make-phil n )
 
 test-i5 : bt Data
-test-i5 =  ? -- Context.memory (make-phil 5)
+test-i5 =  Context.memory (make-phil 5)
 
 -- loop exexution
 

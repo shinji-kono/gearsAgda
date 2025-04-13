@@ -223,13 +223,13 @@ data replacedRBTree  {n : Level} {A : Set n} (key : ℕ) (value : A)  : (before 
 
 data ParentGrand {n : Level} {A : Set n} (key : ℕ) (self : bt A) : (parent uncle grand : bt A) → Set n where
     s2-s1p2 : {kp kg : ℕ} {vp vg : A} → {n1 n2 : bt A} {parent grand : bt A }
-        → key < kp → key < kg → parent ≡ node kp vp self n1 → grand ≡ node kg vg parent n2 → ParentGrand key self parent n2 grand
+        → key < kp → parent ≡ node kp vp self n1 → grand ≡ node kg vg parent n2 → ParentGrand key self parent n2 grand
     s2-1sp2 : {kp kg : ℕ} {vp vg : A} → {n1 n2 : bt A} {parent grand : bt A }
-        → kp < key → key < kg → parent ≡ node kp vp n1 self → grand ≡ node kg vg parent n2 → ParentGrand key self parent n2 grand
+        → kp < key → parent ≡ node kp vp n1 self → grand ≡ node kg vg parent n2 → ParentGrand key self parent n2 grand
     s2-s12p : {kp kg : ℕ} {vp vg : A} → {n1 n2 : bt A} {parent grand : bt A }
-        → key < kp → kg < key → parent ≡ node kp vp self n1 → grand ≡ node kg vg n2 parent → ParentGrand key self parent n2 grand
+        → key < kp → parent ≡ node kp vp self n1 → grand ≡ node kg vg n2 parent → ParentGrand key self parent n2 grand
     s2-1s2p : {kp kg : ℕ} {vp vg : A} → {n1 n2 : bt A} {parent grand : bt A }
-        → kp < key → kg < key → parent ≡ node kp vp n1 self → grand ≡ node kg vg n2 parent → ParentGrand key self parent n2 grand
+        → kp < key → parent ≡ node kp vp n1 self → grand ≡ node kg vg n2 parent → ParentGrand key self parent n2 grand
 
 record PG {n : Level } (A : Set n) (key : ℕ) (self : bt A) (stack : List (bt A)) : Set n where
     field
@@ -755,6 +755,10 @@ RB-repl→ti<  {n} {A} tree repl key key₁ value rbr s1 s2 = RBTI-induction A t
           lem14 : (kn < k2 ) ∧ tr< k2 t₂ ∧ tr< k2 t₃
           lem14 = prev _ x₄ (proj1 (proj2 (proj2 (proj2 x₅))))
 
+node-cong : {n : Level} {A : Set n} → {key key₁ : ℕ} → {value value₁ : A} → {left right left₁ right₁ : bt A} 
+       → key ≡ key₁ → value ≡ value₁ → left ≡ left₁ → right ≡ right₁ → node key value left right ≡ node key₁ value₁ left₁ right₁
+node-cong {n} {A} refl refl refl refl = refl
+
 RBI-child-replaced : {n : Level} {A : Set n} (tr : bt (Color ∧ A)) (key : ℕ) →  RBtreeInvariant tr → RBtreeInvariant (child-replaced key tr)
 RBI-child-replaced {n} {A} leaf key rbi = rbi
 RBI-child-replaced {n} {A} (node key₁ value tr tr₁) key rbi with <-cmp key key₁
@@ -762,5 +766,3 @@ RBI-child-replaced {n} {A} (node key₁ value tr tr₁) key rbi with <-cmp key k
 ... | tri≈ ¬a b ¬c = rbi
 ... | tri> ¬a ¬b c = RBtreeRightDown _ _ rbi
 
--- replacedRBTree→replacedTree : {n : Level} {A : Set n} (key : ℕ) (value : A) (before after : bt (Color ∧ A) ) 
---    → replacedRBTree key value before after → {ca : Color} → replacedTree key ⟪ ca , value ⟫ before after

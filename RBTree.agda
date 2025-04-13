@@ -1,5 +1,5 @@
-{-# OPTIONS --cubical-compatible --safe #-}
--- {-# OPTIONS --allow-unsolved-metas --cubical-compatible #-}
+-- {-# OPTIONS --cubical-compatible --safe #-}
+{-# OPTIONS --allow-unsolved-metas --cubical-compatible #-}
 module RBTree where
 
 open import Level hiding (suc ; zero ; _⊔_ )
@@ -48,10 +48,10 @@ findRBT : {n m : Level} {A : Set n} {t : Set m} → (key : ℕ) → (tree tree0 
 findRBT key leaf tree0 stack rb0 next exit = exit leaf stack rb0 (case1 refl)
 findRBT key (node key₁ value left right) tree0 stack rb0 next exit with <-cmp key key₁
 findRBT key (node key₁ value left right) tree0 stack  rb0 next exit | tri< a ¬b ¬c
- = next left (left ∷ stack) ⟪ RBtreeLeftDown left right (_∧_.proj1 rb0) , s-left _ _ _ a (proj2 rb0) ⟫  depth-1<
+ = next left (left ∷ stack) ⟪ RBtreeLeftDown left right (_∧_.proj1 rb0) , s-left _ _ _ a (_∧_.proj2 rb0) ⟫  depth-1<
 findRBT key n tree0 stack  rb0 _ exit | tri≈ ¬a refl ¬c = exit n stack rb0 (case2 refl)
 findRBT key (node key₁ value left right) tree0 stack  rb0 next exit | tri> ¬a ¬b c
- = next right (right ∷ stack) ⟪ RBtreeRightDown left right (_∧_.proj1 rb0), s-right _ _ _ c (proj2 rb0) ⟫ depth-2<
+ = next right (right ∷ stack) ⟪ RBtreeRightDown left right (_∧_.proj1 rb0), s-right _ _ _ c (_∧_.proj2 rb0) ⟫ depth-2<
 
 
 
@@ -363,7 +363,7 @@ replaceRBP {n} {m} {A} {t} key value orig stack r next exit = replaceRBP1 where
        rb08 pg = siToTreeinvariant _ _ _ _ (RBI.origti r) (popStackInvariant _ _ _ _ _ (rb00 pg))
        rebuildCase1 : (PG (Color ∧ A) key (RBI.tree r) stack) → t
        rebuildCase1 pg with PG.pg pg
-       ... | s2-s1p2 {kp} {kg} {vp} {vg} {n1} {n2} lt lt2 x x₁ = rebuildCase2 where
+       ... | s2-s1p2 {kp} {kg} {vp} {vg} {n1} {n2} lt x x₁ = rebuildCase2 where
           rebuildCase2 : t
           rebuildCase2 = next (PG.parent pg ∷ PG.grand pg ∷ PG.rest pg) record {
               tree = PG.parent pg
@@ -409,7 +409,7 @@ replaceRBP {n} {m} {A} {t} key value orig stack r next exit = replaceRBP1 where
                    rb07 : (vp : Color ∧ A) → black-depth (node kp vp repl n1) ≡ black-depth (node kp vp (RBI.tree r) n1 )
                    rb07 ⟪ Black  , proj4 ⟫ = cong (λ k → suc (k ⊔ black-depth n1 )) bdepth-eq
                    rb07 ⟪ Red  , proj4 ⟫ = cong (λ k → (k ⊔ black-depth n1  )) bdepth-eq
-       ... | s2-1sp2 {kp} {kg} {vp} {vg} {n1} {n2} lt lt2 x x₁ = rebuildCase2 where
+       ... | s2-1sp2 {kp} {kg} {vp} {vg} {n1} {n2} lt x x₁ = rebuildCase2 where
           rebuildCase2 : t
           rebuildCase2 = next (PG.parent pg ∷ PG.grand pg ∷ PG.rest pg) record {
               tree = PG.parent pg
@@ -455,7 +455,7 @@ replaceRBP {n} {m} {A} {t} key value orig stack r next exit = replaceRBP1 where
                    rb07 : (vp : Color ∧ A) → black-depth (node kp vp n1 repl) ≡ black-depth (node kp vp n1 (RBI.tree r))
                    rb07 ⟪ Black  , proj4 ⟫ = cong (λ k → suc (black-depth n1 ⊔ k)) bdepth-eq
                    rb07 ⟪ Red  , proj4 ⟫ = cong (λ k → (black-depth n1 ⊔ k)) bdepth-eq
-       ... | s2-s12p {kp} {kg} {vp} {vg} {n1} {n2} lt lt2 x x₁ = rebuildCase2 where
+       ... | s2-s12p {kp} {kg} {vp} {vg} {n1} {n2} lt x x₁ = rebuildCase2 where
           rebuildCase2 : t
           rebuildCase2 = next (PG.parent pg ∷ PG.grand pg ∷ PG.rest pg) record {
               tree = PG.parent pg
@@ -501,7 +501,7 @@ replaceRBP {n} {m} {A} {t} key value orig stack r next exit = replaceRBP1 where
                    rb07 : (vp : Color ∧ A) → black-depth (node kp vp repl n1) ≡ black-depth (node kp vp (RBI.tree r) n1)
                    rb07 ⟪ Black  , proj4 ⟫ = cong (λ k → suc (k ⊔ black-depth n1 )) bdepth-eq
                    rb07 ⟪ Red  , proj4 ⟫ = cong (λ k → (k ⊔ black-depth n1 ))  bdepth-eq
-       ... | s2-1s2p {kp} {kg} {vp} {vg} {n1} {n2} lt lt2 x x₁ = rebuildCase2 where
+       ... | s2-1s2p {kp} {kg} {vp} {vg} {n1} {n2} lt x x₁ = rebuildCase2 where
           rebuildCase2 : t
           rebuildCase2 = next (PG.parent pg ∷ PG.grand pg ∷ PG.rest pg) record {
               tree = PG.parent pg
@@ -575,7 +575,7 @@ replaceRBP {n} {m} {A} {t} key value orig stack r next exit = replaceRBP1 where
 
         insertCase51 : t
         insertCase51 with PG.pg pg
-        ... | s2-s1p2 {kp} {kg} {vp} {vg} {n1} {n2} lt lt2 x x₁ = insertCase52 where
+        ... | s2-s1p2 {kp} {kg} {vp} {vg} {n1} {n2} lt x x₁ = insertCase52 where
           insertCase52 : t
           insertCase52 = next (PG.grand pg ∷ PG.rest pg) record {
             tree = PG.grand pg
@@ -644,7 +644,7 @@ replaceRBP {n} {m} {A} {t} key value orig stack r next exit = replaceRBP1 where
                 -- x           : PG.parent pg ≡ node kp vp (RBI.tree r) n1
                 -- x₁          : PG.grand pg ≡ node kg vg (PG.parent pg) (PG.uncle pg)
                 -- eq          : node rkey vr rp-left rp-right ≡ RBI.repl r
-        ... | s2-1sp2 {kp} {kg} {vp} {vg} {n1} {n2} lt lt2 x x₁ = insertCase52 where
+        ... | s2-1sp2 {kp} {kg} {vp} {vg} {n1} {n2} lt x x₁ = insertCase52 where
           insertCase52 : t
           insertCase52 = next (PG.grand pg ∷ PG.rest pg) record {
             tree = PG.grand pg
@@ -667,9 +667,9 @@ replaceRBP {n} {m} {A} {t} key value orig stack r next exit = replaceRBP1 where
             rb04 : kp < key
             rb04 = lt
             rb21 : key < kg   -- this can be a part of ParentGand relation
-            rb21 = lt2 -- si-property-< (subst (λ k → ¬ (k ≡ leaf)) (sym x) (λ ())) (subst (λ k → treeInvariant k ) x₁ (siToTreeinvariant _ _ _ _ (RBI.origti r)
-                 -- (popStackInvariant _ _ _ _ _ (popStackInvariant _ _ _ _ _ rb00))))
-                 -- (subst (λ k → stackInvariant key _ orig (PG.parent pg ∷ k ∷ PG.rest pg)) x₁ (popStackInvariant _ _ _ _ _ rb00))
+            rb21 = si-property-< (subst (λ k → ¬ (k ≡ leaf)) (sym x) (λ ())) (subst (λ k → treeInvariant k ) x₁ (siToTreeinvariant _ _ _ _ (RBI.origti r)
+                 (popStackInvariant _ _ _ _ _ (popStackInvariant _ _ _ _ _ rb00))))
+                 (subst (λ k → stackInvariant key _ orig (PG.parent pg ∷ k ∷ PG.rest pg)) x₁ (popStackInvariant _ _ _ _ _ rb00))
             rb16 : color n1 ≡ Black
             rb16 = proj1 (RBtreeChildrenColorBlack _ _ (subst (λ k → RBtreeInvariant k) x rb09) (trans (cong color (sym x)) pcolor))
             rb13 : ⟪ Red , proj2 vp ⟫ ≡ vp
@@ -751,7 +751,7 @@ replaceRBP {n} {m} {A} {t} key value orig stack r next exit = replaceRBP1 where
                  suc (black-depth (PG.uncle pg))  ≡⟨ rb32 ⟩
                  black-depth (PG.grand pg) ∎
                  where open ≡-Reasoning
-        ... | s2-s12p {kp} {kg} {vp} {vg} {n1} {n2} lt lt2 x x₁ = insertCase52 where
+        ... | s2-s12p {kp} {kg} {vp} {vg} {n1} {n2} lt x x₁ = insertCase52 where
           insertCase52 : t
           insertCase52 = next (PG.grand pg ∷ PG.rest pg) record {
             tree = PG.grand pg
@@ -774,9 +774,9 @@ replaceRBP {n} {m} {A} {t} key value orig stack r next exit = replaceRBP1 where
             rb04 : key < kp
             rb04 = lt
             rb21 : kg < key   -- this can be a part of ParentGand relation
-            rb21 = lt2 -- si-property-> (subst (λ k → ¬ (k ≡ leaf)) (sym x) (λ ())) (subst (λ k → treeInvariant k ) x₁ (siToTreeinvariant _ _ _ _ (RBI.origti r)
-                 -- (popStackInvariant _ _ _ _ _ (popStackInvariant _ _ _ _ _ rb00))))
-                 -- (subst (λ k → stackInvariant key _ orig (PG.parent pg ∷ k ∷ PG.rest pg)) x₁ (popStackInvariant _ _ _ _ _ rb00))
+            rb21 = si-property-> (subst (λ k → ¬ (k ≡ leaf)) (sym x) (λ ())) (subst (λ k → treeInvariant k ) x₁ (siToTreeinvariant _ _ _ _ (RBI.origti r)
+                 (popStackInvariant _ _ _ _ _ (popStackInvariant _ _ _ _ _ rb00))))
+                 (subst (λ k → stackInvariant key _ orig (PG.parent pg ∷ k ∷ PG.rest pg)) x₁ (popStackInvariant _ _ _ _ _ rb00))
             rb16 : color n1 ≡ Black
             rb16 = proj2 (RBtreeChildrenColorBlack _ _ (subst (λ k → RBtreeInvariant k) x rb09) (trans (cong color (sym x)) pcolor))
             rb13 : ⟪ Red , proj2 vp ⟫ ≡ vp
@@ -863,7 +863,7 @@ replaceRBP {n} {m} {A} {t} key value orig stack r next exit = replaceRBP1 where
                  suc (black-depth (PG.uncle pg))  ≡⟨ rb32 ⟩
                  black-depth (PG.grand pg) ∎
                     where open ≡-Reasoning
-        ... | s2-1s2p {kp} {kg} {vp} {vg} {n1} {n2} lt lt2 x x₁ = insertCase52 where
+        ... | s2-1s2p {kp} {kg} {vp} {vg} {n1} {n2} lt x x₁ = insertCase52 where
           insertCase52 : t
           insertCase52 = next (PG.grand pg ∷ PG.rest pg) record {
             tree = PG.grand pg
@@ -921,6 +921,7 @@ replaceRBP {n} {m} {A} {t} key value orig stack r next exit = replaceRBP1 where
                black-depth n1 ≡⟨ sym (⊔-idem (black-depth n1)) ⟩
                black-depth n1 ⊔ black-depth n1 ≡⟨ cong (λ k → k ⊔ _) (sym rb19) ⟩
                black-depth (PG.uncle pg) ⊔ black-depth n1 ∎ ) where open ≡-Reasoning
+                -- suc (black-depth (node rkey vr rp-left rp-right) ⊔ (black-depth n1 ⊔ black-depth (PG.uncle pg))) ≡ black-depth (PG.grand pg)
             rb17 : suc (black-depth (PG.uncle pg) ⊔ black-depth n1 ⊔ black-depth (node rkey vr rp-left rp-right)) ≡ black-depth (PG.grand pg)
             rb17 = begin
                 suc (black-depth (PG.uncle pg) ⊔ black-depth n1 ⊔ black-depth (node rkey vr rp-left rp-right))
@@ -951,7 +952,7 @@ replaceRBP {n} {m} {A} {t} key value orig stack r next exit = replaceRBP1 where
        rb08 pg = siToTreeinvariant _ _ _ _ (RBI.origti r) (popStackInvariant _ _ _ _ _ (rb00 pg))
        insertCase1 : t
        insertCase1 with PG.pg pg
-       ... | s2-s1p2 {kp} {kg} {vp} {vg} {n1} {n2} lt lt2 x x₁ = next (PG.parent pg ∷ PG.grand pg ∷ PG.rest pg) record {
+       ... | s2-s1p2 {kp} {kg} {vp} {vg} {n1} {n2} lt x x₁ = next (PG.parent pg ∷ PG.grand pg ∷ PG.rest pg) record {
             tree = PG.parent pg
             ; repl = rb01
             ; origti = RBI.origti r
@@ -988,7 +989,7 @@ replaceRBP {n} {m} {A} {t} key value orig stack r next exit = replaceRBP1 where
             rb06 = subst (λ k → RBtreeInvariant (node kp k repl n1))  rb04
                ( rb-black _ _ rb07 (RBI.replrb r) (RBtreeRightDown _ _ (subst (λ k → RBtreeInvariant k) x (treerb pg))))
             rb11 = subst (λ k → replacedRBTree key value k (node kp vp repl n1) ) (sym x) (rb02 rb04 )
-       ... | s2-1sp2 {kp} {kg} {vp} {vg} {n1} {n2} lt lt2 x x₁ = next (PG.parent pg ∷ PG.grand pg ∷ PG.rest pg) record {
+       ... | s2-1sp2 {kp} {kg} {vp} {vg} {n1} {n2} lt x x₁ = next (PG.parent pg ∷ PG.grand pg ∷ PG.rest pg) record {
             tree = PG.parent pg
             ; repl = rb01
             ; origti = RBI.origti r
@@ -1028,7 +1029,7 @@ replaceRBP {n} {m} {A} {t} key value orig stack r next exit = replaceRBP1 where
             rb06 = subst (λ k → RBtreeInvariant (node kp k n1 repl ))  rb04
                ( rb-black _ _ (sym rb07) (RBtreeLeftDown _ _ (subst (λ k → RBtreeInvariant k) x (treerb pg))) (RBI.replrb r) )
             rb11 = subst (λ k → replacedRBTree key value k (node kp vp n1 repl) ) (sym x) (rb02 rb04 )
-       insertCase1 | s2-s12p {kp} {kg} {vp} {vg} {n1} {n2} lt lt2 x x₁ = next (PG.parent pg ∷ PG.grand pg ∷ PG.rest pg) record {
+       insertCase1 | s2-s12p {kp} {kg} {vp} {vg} {n1} {n2} lt x x₁ = next (PG.parent pg ∷ PG.grand pg ∷ PG.rest pg) record {
             tree = PG.parent pg
             ; repl = rb01
             ; origti = RBI.origti r
@@ -1066,7 +1067,7 @@ replaceRBP {n} {m} {A} {t} key value orig stack r next exit = replaceRBP1 where
             rb06 = subst (λ k → RBtreeInvariant (node kp k repl n1))  rb04
                ( rb-black _ _ rb07 (RBI.replrb r) (RBtreeRightDown _ _ (subst (λ k → RBtreeInvariant k) x (treerb pg))))
             rb11 = (subst (λ k → replacedRBTree key value k (node kp vp repl n1) ) (sym x) (rb02 rb04 ))
-       insertCase1 | s2-1s2p {kp} {kg} {vp} {vg} {n1} {n2} lt lt2 x x₁ = next (PG.parent pg ∷ PG.grand pg ∷ PG.rest pg) record {
+       insertCase1 | s2-1s2p {kp} {kg} {vp} {vg} {n1} {n2} lt x x₁ = next (PG.parent pg ∷ PG.grand pg ∷ PG.rest pg) record {
             tree = PG.parent pg
             ; repl = rb01
             ; origti = RBI.origti r
@@ -1110,7 +1111,7 @@ replaceRBP {n} {m} {A} {t} key value orig stack r next exit = replaceRBP1 where
     ... | leaf = insertCase5 repl refl pg rot repl-red (cong color uneq) pcolor
     ... | node key₁ ⟪ Black , value₁ ⟫ t₁ t₂ = insertCase5 repl refl pg rot repl-red (cong color uneq) pcolor
     ... | node key₁ ⟪ Red , value₁ ⟫ t₁ t₂ with PG.pg pg   -- insertCase2 : uncle and parent are Red, flip color and go up by two level
-    ... | s2-s1p2 {kp} {kg} {vp} {vg} {n1} {n2} lt lt2 x x₁ = insertCase2 where
+    ... | s2-s1p2 {kp} {kg} {vp} {vg} {n1} {n2} lt x x₁ = insertCase2 where
         insertCase2 : t
         insertCase2 = next  (PG.grand pg ∷ (PG.rest pg))
             record {
@@ -1178,7 +1179,7 @@ replaceRBP {n} {m} {A} {t} key value orig stack r next exit = replaceRBP1 where
                   length stack ∎
                      where open ≤-Reasoning
                rb20 = (subst₂ (λ j k → replacedRBTree key value j k ) (sym rb09) refl (rbr-flip-ll repl-red (rb05 refl uneq) rb06 rot))
-    ... | s2-1sp2 {kp} {kg} {vp} {vg} {n1} {n2} lt lt2 x x₁ = insertCase2 where
+    ... | s2-1sp2 {kp} {kg} {vp} {vg} {n1} {n2} lt x x₁ = insertCase2 where
         insertCase2 : t
         insertCase2 = next  (PG.grand pg ∷ (PG.rest pg))
             record {
@@ -1255,7 +1256,7 @@ replaceRBP {n} {m} {A} {t} key value orig stack r next exit = replaceRBP1 where
                   length stack ∎
                      where open ≤-Reasoning
                rb20 = subst₂ (λ j k → replacedRBTree key value j k ) rb09 refl (rbr-flip-lr repl-red (rb05 refl uneq) rb06 rb21 rot)
-    ... | s2-s12p {kp} {kg} {vp} {vg} {n1} {n2} lt lt2 x x₁ = insertCase2 where
+    ... | s2-s12p {kp} {kg} {vp} {vg} {n1} {n2} lt x x₁ = insertCase2 where
         insertCase2 : t
         insertCase2 = next  (PG.grand pg ∷ (PG.rest pg))
             record {
@@ -1338,7 +1339,7 @@ replaceRBP {n} {m} {A} {t} key value orig stack r next exit = replaceRBP1 where
                   length stack ∎
                      where open ≤-Reasoning
                rb20 = subst₂ (λ j k → replacedRBTree key value j k ) rb09 refl  (rbr-flip-rl repl-red (rb05 refl uneq) rb21 rb06 rot)
-    ... | s2-1s2p {kp} {kg} {vp} {vg} {n1} {n2} lt lt2 x x₁ = insertCase2 where
+    ... | s2-1s2p {kp} {kg} {vp} {vg} {n1} {n2} lt x x₁ = insertCase2 where
            --- lt : kp < key
            --- x  : PG.parent pg ≡ node kp vp n1 (RBI.tree r)
            --- x₁ : PG.grand pg ≡ node kg vg (PG.uncle pg) (PG.parent pg)

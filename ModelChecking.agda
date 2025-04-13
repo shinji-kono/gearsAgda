@@ -1,5 +1,5 @@
-{-# OPTIONS --cubical-compatible --allow-unsolved-metas #-}
--- {-# OPTIONS --cubical-compatible --safe #-}
+-- {-# OPTIONS --cubical-compatible --allow-unsolved-metas #-}
+{-# OPTIONS --cubical-compatible --safe #-}
 module ModelChecking where
 
 open import Level renaming (zero to Z ; suc to succ)
@@ -74,14 +74,18 @@ data Data : Set where
 record Context  : Set  where
    field
       next :      Code 
-      mbase :     List Data
+      fail :      Code
 
-record ContextSched  : Set  where
-   field
-      shared_size : ℕ
-      shared_Data : List ℕ
-      context_size : ℕ
-      context_list : List Context
+      --  -API list (frame in Gears Agda )  --- a Data of API
+      -- api : List API
+      -- c_Phil-API :     Maybe Phil-API
+      -- c_Phil-API :     ?
+      -- c_AtomicNat-API : AtomicNat-API
+
+      mbase :     ℕ
+      -- memory :    ?
+      error :     Data
+      fail_next :      Code
 
 --
 -- second level stub
@@ -102,14 +106,22 @@ step {n} {t} (p ∷ ps) next0 = code_table (Context.next p) p ( λ code np → n
 
 init-context : Context
 init-context = record {
+      next = CC_nop
+    ; fail = CC_nop
+    -- ; c_Phil-API = ?
+    -- ; c_AtomicNat-API = record { next = CC_nop ; fail = CC_nop ; value = 0 ; impl = init-AtomicNat } 
+    ; mbase = 0
+    -- ; memory = ?
+    ; error = ?
+    ; fail_next = CC_nop
   }
 
--- alloc-data : {n : Level} {t : Set n} → ( c : Context ) → ( Context → ℕ → t ) → t
--- alloc-data {n} {t} c next = next record c { mbase =  suc ( Context.mbase c ) } mnext  where
---      mnext = suc ( Context.mbase c )
+alloc-data : {n : Level} {t : Set n} → ( c : Context ) → ( Context → ℕ → t ) → t
+alloc-data {n} {t} c next = next record c { mbase =  suc ( Context.mbase c ) } mnext  where
+     mnext = suc ( Context.mbase c )
 
--- new-data : {n : Level} {t : Set n} → ( c : Context ) → (ℕ → Data ) → ( Context → ℕ → t ) → t
--- new-data  c x next  = alloc-data c $ λ c1 n → ? -- insertTree (Context.memory c1) n (x n) ( λ bt → next record c1 { memory = bt } n )
+new-data : {n : Level} {t : Set n} → ( c : Context ) → (ℕ → Data ) → ( Context → ℕ → t ) → t
+new-data  c x next  = alloc-data c $ λ c1 n → ? -- insertTree (Context.memory c1) n (x n) ( λ bt → next record c1 { memory = bt } n )
 
 init-AtomicNat0 :  {n : Level} {t : Set n} → Context  → ( Context →  ℕ → t ) → t
 init-AtomicNat0 c1  next = ?
@@ -125,16 +137,11 @@ nat-<> {x} {y} x<y y<x with <-cmp x y
 ... | tri≈ ¬a b ¬c = ⊥-elim ( ¬c y<x )
 ... | tri> ¬a ¬b c = ⊥-elim ( ¬a x<y )
 
-px≤py : {x y : ℕ} → suc x ≤ suc y → x ≤ y
-px≤py {x}{y} x<y = lem01 (suc x) (suc y) refl refl x<y where
-  lem01 : (i j : ℕ) → suc x ≡ i → suc y ≡ j → i ≤ j  → x ≤ y
-  lem01 _ _ () sy=i z≤n
-  lem01 _ _ sx=i sy=i (s≤s i≤j) = subst₂ (λ i j → i ≤ j) (sym (cong pred sx=i)) (sym (cong pred sy=i)) i≤j
-
 nat-≤> : { x y : ℕ } → x ≤ y → y < x → ⊥
-nat-≤> {zero} {y} x≤y ()
-nat-≤> {suc x} {zero} () y<x
-nat-≤> {suc x} {suc y} x≤y y<x = nat-≤> {x} {y} (px≤py x≤y) (px≤py y<x)
+nat-≤> {x} {y} x≤y y<x with <-cmp x y
+... | tri< a ¬b ¬c = ⊥-elim ( ¬c y<x )
+... | tri≈ ¬a b ¬c = ⊥-elim ( ¬c y<x )
+... | tri> ¬a ¬b c = ?
 
 
 nat-<≡ : { x : ℕ } → x < x → ⊥
@@ -149,34 +156,26 @@ nat-≡< refl lt = nat-<≡ lt
 lemma3 : {i j : ℕ} → 0 ≡ i → j < i → ⊥
 lemma3 refl ()
 lemma5 : {i j : ℕ} → i < 1 → j < i → ⊥
-lemma5 {zero}  {j} i<1 j<i = ⊥-elim ( nat-≤> j<i (s≤s z≤n ))
-lemma5 {suc i} {j} i<1 j<i = ⊥-elim ( nat-≤> (s≤s z≤n ) i<1 )
+lemma5 {i} {j} i<1 j<i with <-cmp j i
+... | tri< a ¬b ¬c = ⊥-elim ( ¬c ? )
+... | tri≈ ¬a b ¬c = ⊥-elim  (¬a j<i )
+... | tri> ¬a ¬b c = ⊥-elim ( ¬a j<i )
 
 ¬x<x : {x : ℕ} → ¬ (x < x)
-¬x<x x<x = nat-<≡ x<x
+¬x<x x<x = ?
 
-TerminatingLoopS : {l m : Level} {t : Set l} (Context : Set m ) → {Invraiant : Context → Set m } → ( reduce : Context → ℕ)
-   → (r : Context) → (p : Invraiant r)
-   → (loop : (r : Context)  → Invraiant r → (next : (r1 : Context)  → Invraiant r1 → reduce r1 < reduce r  → t ) → t) → t
-TerminatingLoopS {_} {_} {t} Context {Invraiant} reduce r p loop with <-cmp 0 (reduce r)
+TerminatingLoopS : {l m : Level} {t : Set l} (Index : Set m ) → {Invraiant : Index → Set m } → ( reduce : Index → ℕ)
+   → (r : Index) → (p : Invraiant r)
+   → (loop : (r : Index)  → Invraiant r → (next : (r1 : Index)  → Invraiant r1 → reduce r1 < reduce r  → t ) → t) → t
+TerminatingLoopS {_} {_} {t} Index {Invraiant} reduce r p loop with <-cmp 0 (reduce r)
 ... | tri≈ ¬a b ¬c = loop r p (λ r1 p1 lt → ⊥-elim (lemma3 b lt) )
 ... | tri< a ¬b ¬c = loop r p (λ r1 p1 lt1 → TerminatingLoop1 (reduce r) r r1 (m≤n⇒m≤1+n lt1) p1 lt1 ) where
-    TerminatingLoop1 : (j : ℕ) → (r r1 : Context) → reduce r1 < suc j  → Invraiant r1 →  reduce r1 < reduce r → t
+    TerminatingLoop1 : (j : ℕ) → (r r1 : Index) → reduce r1 < suc j  → Invraiant r1 →  reduce r1 < reduce r → t
     TerminatingLoop1 zero r r1 n≤j p1 lt = loop r1 p1 (λ r2 p1 lt1 → ⊥-elim (lemma5 n≤j lt1))
     TerminatingLoop1 (suc j) r r1  n≤j p1 lt with <-cmp (reduce r1) (suc j)
     ... | tri< a ¬b ¬c = TerminatingLoop1 j r r1 a p1 lt
     ... | tri≈ ¬a b ¬c = loop r1 p1 (λ r2 p2 lt1 → TerminatingLoop1 j r1 r2 (subst (λ k → reduce r2 < k ) b lt1 ) p2 lt1 )
     ... | tri> ¬a ¬b c =  ⊥-elim ( nat-≤> c n≤j )
-
-stateNum : ContextSched → ℕ
-stateNum = ?
-
-invariant-sched : ContextSched → Set
-invariant-sched = ?
-
-step1 : {l : Level} {t : Set l} → (c : ContextSched ) → (i : invariant-sched c) 
-   → ((c1 : ContextSched) → invariant-sched c1 → stateNum c < stateNum c1 → t) → t
-step1 {l} {t} c i step = ?
 
 -- loop exexution
 
